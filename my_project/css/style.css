@@ -105,13 +105,51 @@ footer ul li p{
     align-items: center;
 }
 /*  */
-#home-content { display:flex; flex-direction:column; gap:30px; }
-.product-card { width:180px; border:1px solid #ccc; padding:10px; cursor:pointer; }
-.product-card img { width:100%; height:120px; object-fit:cover; }
-#home-content > div { display:flex; flex-wrap:wrap; gap:10px; }
-.product-list { display:flex; flex-wrap:wrap; gap:10px; }
-.app-color{
+#home-content {
+    display:flex;
+    flex-direction:column;
+    gap:2.6rem;
+}
+.product-card {
+    background: whitesmoke;
+    width: 17%;
+    height: 34rem;
+    font-size: 1.8rem;
+    border: 1px solid black;
+    margin-bottom: 20px;
+}
+.product-card img {
+    width:24rem;
+    height: 25.9rem;
+    border-bottom: 1px solid black;
+    object-fit:cover;
+}
+.product-card h3{
+    font-size: 20px;
+    text-align: center;
+    margin: 4px;
+    padding: o auto;
+    font-weight: 500;
+}
+.product-card p{
+    text-align: right;
+    margin-top: 14px;
+    margin-right: 5px;
+    color: rgb(39, 123, 95);
+}
+#home-content > div {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content: space-around;
+    gap:10px; }
+.product-list {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content: space-around;
+    gap:6px; }
+    .app-color{
     font-size: 4rem;
+    line-height: 1.2rem;
     color: rgb(0, 0, 0);
     font-weight: 500;
     margin: 30px 20px ;
@@ -120,9 +158,19 @@ footer ul li p{
 }
 .product-list{
     margin: 0 20px 30px 20px;
-    background-color: rgb(82, 171, 124);
+    /* background-color: rgb(82, 171, 124); */
+}
+/* chi tiet */
+#app .product-card .product-img {
+  width: 100% !important;
+  max-width: 400px;
+  height: auto;
+  display: block;
+  margin: 0 auto 10px;
 }
 
+
+/*  */
 .prev, .next {
   cursor: pointer;
   position: absolute;
