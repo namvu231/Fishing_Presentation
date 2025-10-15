@@ -1,17 +1,91 @@
 
 let products = [];
-
 // ----- Load  JSON -----
 async function loadProducts() {
   try {
     const res = await fetch('./data/products.json');
     const data = await res.json();
     products = data;
+    initSearch();
     router();
   } catch (err) {
     console.error('error can not call json', err);
   }
 }
+// Khởi tạo tìm kiếm sau khi products load xong
+function initSearch() {
+  const searchInput = document.getElementById("searchInput");
+  const searchSuggestions = document.getElementById("searchSuggestions");
+
+  // Khi gõ input
+  searchInput.addEventListener("input", function() {
+      const query = this.value.toLowerCase();
+      if (!query) {
+          searchSuggestions.innerHTML = "";
+          return;
+      }
+
+      const matchedProducts = products.filter(p =>
+          p.name.toLowerCase().includes(query)
+      ).slice(0, 5);
+
+      searchSuggestions.innerHTML = matchedProducts.map(p => `
+          <div data-id="${p.id}">${p.name}</div>
+      `).join('');
+
+      searchSuggestions.querySelectorAll("div").forEach(item => {
+          item.addEventListener("click", () => {
+              navigate(`#product/${item.dataset.id}`);
+              searchSuggestions.innerHTML = "";
+              searchInput.value = item.textContent;
+          });
+      });
+  });
+
+  // Nhấn Enter
+  searchInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+          const query = this.value.toLowerCase();
+          const matchedProducts = products.filter(p =>
+              p.name.toLowerCase().includes(query)
+          );
+          if (matchedProducts.length > 0) {
+              navigate(`#product/${matchedProducts[0].id}`);
+              searchSuggestions.innerHTML = "";
+          }
+      }
+  });
+
+  // Click ngoài dropdown → ẩn
+  document.addEventListener("click", function(e) {
+      if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
+          searchSuggestions.innerHTML = "";
+      }
+  });
+}
+  document.getElementById('callBtn').addEventListener('click', () => {
+    window.location.href = 'tel:0123456789';
+  });
+  // Nhấn Enter
+  searchInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+          const query = this.value.toLowerCase();
+          const matchedProducts = products.filter(p =>
+              p.name.toLowerCase().includes(query)
+          );
+          if (matchedProducts.length > 0) {
+              navigate(`#product/${matchedProducts[0].id}`);
+              searchSuggestions.innerHTML = "";
+          }
+      }
+  });
+
+  // Click ngoài dropdown → ẩn
+  document.addEventListener("click", function(e) {
+      if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
+          searchSuggestions.innerHTML = "";
+      }
+  });
 
 // ----- Render home-----
 function renderHome() {
@@ -43,7 +117,7 @@ function renderHome() {
 
   // Slideshow JS
  const slides = homeContent.querySelectorAll(".slide");
-let slideIndex = 0;
+ let slideIndex = 0;
 
 function showSlide(index) {
   if (!slides.length) return; // check if slides exist
@@ -74,9 +148,8 @@ function nextSlide() {
 }
 
 showSlide(slideIndex);
-
-  // Render products by category
-  const categories = [...new Set(products.map(p => p.category))];
+  // ----- Render sản phẩm-----
+  const categories = [...new Set(products.map(p => p.category))]; // không filter
   categories.forEach(cat => {
     const catDivId = `home-${cat}`;
     homeContent.insertAdjacentHTML('beforeend', `
@@ -85,25 +158,40 @@ showSlide(slideIndex);
     `);
     renderProductsToHome(cat, catDivId);
   });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 // -----render products to home 10 product -----
 function renderProductsToHome(category, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
+
   const list = products
     .filter(p => p.category === category)
     .sort((a, b) => b.id - a.id)
     .slice(0, 10);
-  container.innerHTML = list.map(p => `
-    <div class="product-card" onclick="showDetail(${p.id})">
-      <img src="${p.img}" alt="${p.name}">
-      <h3>${p.name}</h3>
-      <p>${p.price.toLocaleString()} 円</p>
-    </div>
-  `).join('');
-}
 
+  container.innerHTML = list.map(p => {
+    // Nếu là sản phẩm bình thường
+    if(p.price){
+      return `
+        <div class="product-card" onclick="showDetail(${p.id})">
+          <img src="${p.img}" alt="${p.name}">
+          <h3>${p.name}</h3>
+          <p>${p.price.toLocaleString()} 円</p>
+        </div>
+      `;
+    }
+    // Nếu là tin tức (không có price)
+    else {
+      return `
+        <div class="product-card" onclick="navigate('#news/${p.id}')">
+          <img src="${p.img}" alt="${p.name}">
+          <h3>${p.name}</h3>
+        </div>
+      `;
+    }
+  }).join('');
+}
 // ----- Render products list -----
 function renderProducts() {
   const app = document.getElementById('app');
@@ -112,6 +200,8 @@ function renderProducts() {
   const categories = [...new Set(products.map(p => p.category))];
 
   categories.forEach(cat => {
+    if (cat === '情報') return; // 🚫 Không hiển thị danh mục tin tức
+
     const catDivId = `products-${cat}`;
     app.insertAdjacentHTML('beforeend', `
       <h2 class="app-color">${cat}</h2>
@@ -131,7 +221,9 @@ function renderProducts() {
       </div>
     `).join('');
   });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 // ----- show detail product -----
 function showDetail(id) {
@@ -159,11 +251,11 @@ function showDetail(id) {
       </div>
       <p class="desc"><span>説明 :</span> ${p.desc}  </p>
       <p class="usage"><span>使用法 :</span> ${p.usage}  </p>
-      <button class="back-btn" onclick="renderHome()"> ← Quay lại </button>
+      <button class="back-btn" onclick="renderHome()"> ← 戻る </button>
     </div>
   </div>
 `;
-
+window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ----- other pages -----
@@ -211,49 +303,48 @@ function renderReturns() {
 }
 
 function renderNews() {
-  document.getElementById('app').innerHTML = `
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  const newsItems = products.filter(p => p.category === '情報');
+
+  app.insertAdjacentHTML('beforeend', `
     <section class="news-section">
       <h1>🎣 ニュース・釣りの豆知識</h1>
-
       <div class="news-grid">
-        <div class="news-card">
-          <img src="./image/news/news1.jpg" alt="Cách chọn cần câu phù hợp">
-          <h2>自分に合った釣り竿の選び方</h2>
-          <p>釣りのスタイルや魚の種類に合わせて、最適な釣り竿を選ぶポイントをご紹介します。</p>
-        </div>
+        ${newsItems.map(n => `
+          <div class="news-card" onclick="navigate('#news/${n.id}')">
+            <img src="${n.img}" alt="${n.name}">
+            <h3>${n.name}</h3>
+            <p>${n.desc}</p>
+          </div>
+        `).join('')}
+      </div>
+      <button class="back-btn" onclick="renderHome()">← ホームに戻る</button>
+    </section>
+  `);
+}
+function renderNewsDetail(id) {
+  const app = document.getElementById('app');
+  const n = products.find(p => p.id === id && p.category === '情報');
+  if(!n){
+    app.innerHTML = '<h1>記事が見つかりません</h1>';
+    return;
+  }
 
-        <div class="news-card">
-          <img src="./image/news/news2.jpg" alt="Bảo dưỡng máy câu">
-          <h2>リールのメンテナンス方法</h2>
-          <p>リールの寿命を延ばすための基本的なメンテナンスと、よくあるトラブルの防止法。</p>
-        </div>
-
-        <div class="news-card">
-          <img src="./image/news/news3.jpg" alt="Bảo dưỡng cần câu">
-          <h2>釣り竿のお手入れガイド</h2>
-          <p>使用後の正しい洗浄や保管方法を知ることで、釣り竿を長持ちさせましょう。</p>
-        </div>
-
-        <div class="news-card">
-          <img src="./image/news/news4.jpg" alt="Cộng đồng câu cá">
-          <h2>釣り仲間とつながるオンラインコミュニティ</h2>
-          <p>全国の釣り愛好家とつながれる人気コミュニティを紹介します。</p>
-        </div>
-
-        <div class="news-card">
-          <img src="./image/news/news5.jpg" alt="Mẹo câu cá hiệu quả">
-          <h2>初心者でもできる釣果アップのコツ</h2>
-          <p>エサの選び方、仕掛けの工夫など、初心者におすすめのコツをまとめました。</p>
-        </div>
-
-        <div class="news-card">
-          <img src="./image/news/news6.jpg" alt="Bảo vệ môi trường câu cá">
-          <h2>環境に優しい釣りを楽しもう</h2>
-          <p>自然と共に楽しむために、エコフィッシングの考え方と実践方法を紹介します。</p>
+  app.innerHTML = `
+    <section class="news-detail">
+      <div class="news-img-container"><img src="${n.img}" alt="${n.name}" class="news-img"></div>
+      <div class="news-content">
+        <h1>${n.name}</h1>
+        <p class="short-desc">${n.desc}</p>
+        <p class="full-desc">${n.desc2 ? n.desc2 : ''}</p>
+        ${n.usage ? `<p class="usage"><strong>使用法:</strong> ${n.usage}</p>` : ''}
+        <div class="button-group">
+          <button class="back-btn" onclick="renderNews()">← ニュース一覧に戻る</button>
+          <button class="back-btn" onclick="renderHome()">← ホームに戻る</button>
         </div>
       </div>
-
-      <button class="back-btn" onclick="renderHome()">← ホームに戻る</button>
     </section>
   `;
 }
@@ -304,17 +395,23 @@ function renderContact() {
 // ----- Router -----
 function router() {
   const hash = location.hash || '#home';
+
   if (hash === '#home') renderHome();
   else if (hash === '#products') renderProducts();
   else if (hash.startsWith('#product/')) {
     const id = hash.split('/')[1];
-    showDetail(id); // by showDetail function (not renderProductDetail)
+    showDetail(id);
   }
   else if (hash === '#news') renderNews();
-  else if (hash === '#returns') renderReturns();
+  else if (hash.startsWith('#news/')) {
+    const id = Number(hash.split('/')[1]);
+    renderNewsDetail(id);
+  }
   else if (hash === '#contact') renderContact();
+  else if (hash === '#returns') renderReturns();
   else document.getElementById('app').innerHTML = '<h1>404 - ページが見つかりません</h1>';
 }
+
 
 // ----- Navigate helper -----
 function navigate(hash) { location.hash = hash; }
