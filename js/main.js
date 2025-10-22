@@ -1,6 +1,4 @@
-
 let products = [];
-// ----- Load  JSON -----
 async function loadProducts() {
   try {
     const res = await fetch('./data/products.json');
@@ -55,7 +53,6 @@ function initSearch() {
           }
       }
   });
-
   // Click ngoài dropdown → ẩn
   document.addEventListener("click", function(e) {
       if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
@@ -63,35 +60,10 @@ function initSearch() {
       }
   });
 }
-  document.getElementById('callBtn').addEventListener('click', () => {
-    window.location.href = 'tel:0123456789';
-  });
-  // Nhấn Enter
-  searchInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-          const query = this.value.toLowerCase();
-          const matchedProducts = products.filter(p =>
-              p.name.toLowerCase().includes(query)
-          );
-          if (matchedProducts.length > 0) {
-              navigate(`#product/${matchedProducts[0].id}`);
-              searchSuggestions.innerHTML = "";
-          }
-      }
-  });
-
-  // Click ngoài dropdown → ẩn
-  document.addEventListener("click", function(e) {
-      if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
-          searchSuggestions.innerHTML = "";
-      }
-  });
-
 // ----- Render home-----
 function renderHome() {
   const app = document.getElementById('app');
   app.innerHTML = '';
-
   // get home content not value
   let homeContent = document.getElementById('home-content');
   if (!homeContent) {
@@ -99,7 +71,6 @@ function renderHome() {
     homeContent.id = 'home-content';
     app.appendChild(homeContent);
   }
-
   // add slideshow
   homeContent.innerHTML = `
     <div class="slideshow">
@@ -114,34 +85,29 @@ function renderHome() {
       </div>
     </div>
   `;
-
   // Slideshow JS
- const slides = homeContent.querySelectorAll(".slide");
- let slideIndex = 0;
-
-function showSlide(index) {
-  if (!slides.length) return; // check if slides exist
-  slides.forEach((s) => {
-    s.classList.remove("active");
-    const v = s.querySelector("video");
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
+  const slides = homeContent.querySelectorAll(".slide");
+  let slideIndex = 0;
+  function showSlide(index) {
+    if (!slides.length) return; // check if slides exist
+    slides.forEach((s) => {
+      s.classList.remove("active");
+      const v = s.querySelector("video");
+      if (v) {
+        v.pause();
+        v.currentTime = 0;
+      }
+    });
+    const current = slides[index];
+    current.classList.add("active");
+    const video = current.querySelector("video");
+    if (video) {
+      video.play();
+      video.onended = nextSlide;
+    } else {
+      setTimeout(nextSlide, 5000);
     }
-  });
-
-  const current = slides[index];
-  current.classList.add("active");
-
-  const video = current.querySelector("video");
-  if (video) {
-    video.play();
-    video.onended = nextSlide;
-  } else {
-    setTimeout(nextSlide, 5000);
   }
-}
-
 function nextSlide() {
   slideIndex = (slideIndex + 1) % slides.length;
   showSlide(slideIndex);
@@ -200,7 +166,7 @@ function renderProducts() {
   const categories = [...new Set(products.map(p => p.category))];
 
   categories.forEach(cat => {
-    if (cat === '情報') return; // 🚫 Không hiển thị danh mục tin tức
+    if (cat === '情報') return;
 
     const catDivId = `products-${cat}`;
     app.insertAdjacentHTML('beforeend', `
@@ -382,7 +348,7 @@ function renderContact() {
             <input type="text" placeholder="お名前 " required>
             <input type="email" placeholder="メールアドレス" required>
             <textarea placeholder="メッセージ" required></textarea>
-            <button type="submit">送信</button>
+            <button class="btn-send" type="submit">送信</button>
           </form>
         </div>
       </div>
@@ -411,46 +377,8 @@ function router() {
   else if (hash === '#returns') renderReturns();
   else document.getElementById('app').innerHTML = '<h1>404 - ページが見つかりません</h1>';
 }
-
-
 // ----- Navigate helper -----
 function navigate(hash) { location.hash = hash; }
-
-// ----- Slideshow -----
-let slideIndex = 0;
-let slides = [];
-document.addEventListener("DOMContentLoaded", () => {
-  slides = document.querySelectorAll(".slide");
-  showSlide(slideIndex);
-});
-
-function showSlide(index) {
-  slides.forEach((s) => {
-    s.classList.remove("active");
-    const v = s.querySelector("video");
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
-    }
-  });
-
-  const current = slides[index];
-  current.classList.add("active");
-
-  const video = current.querySelector("video");
-  if (video) {
-    video.play();
-    video.onended = nextSlide;
-  } else {
-    setTimeout(nextSlide, 3000);
-  }
-}
-
-function nextSlide() {
-  slideIndex = (slideIndex + 1) % slides.length;
-  showSlide(slideIndex);
-}
-
 // ----- Start -----
 window.addEventListener('DOMContentLoaded', loadProducts);
 window.addEventListener('hashchange', router);
