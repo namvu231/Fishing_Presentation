@@ -1,5 +1,94 @@
 let products = [];
-async function loadProducts() {
+async function loadLayout() {
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    <header class="header_top">
+      <ul>
+        <li>
+          <a href="#home"><img class="logo" src="./img/img_logo_backgruond/logo_fanvico.png" alt="logo"></a>
+        </li>
+        <li>
+          <a href="#"><img src="./img/icon/100.png" alt="100% 正規品保証"></a>
+          <div>
+            <h2>100% 正規品保証</h2>
+            <p>正規品、高品質、出所明確な商品</p>
+          </div>
+        </li>
+        <li>
+          <a href="tel:0123456789" class="call-btn"><img id="callBtn" src="./img/icon/call.png" alt="迅速な注文"></a>
+          <div>
+            <h2>迅速な注文</h2>
+            <p>今すぐお電話ください 0934.687.369</p>
+          </div>
+        </li>
+        <li>
+          <a href="#cart" onclick="renderCart()"><img src="./img/icon/shoping.png" alt="カート"></a>
+          <div>
+            <h2 class="header_topspecial">カート</h2>
+            <p id="cartCount">(0 商品)</p>
+          </div>
+        </li>
+        <li>
+          <img src="./img/icon/search.png" alt="検索">
+          <div class="search-container">
+            <input type="text" id="searchInput" placeholder="商品を検索">
+            <div id="searchSuggestions" class="suggestions"></div>
+          </div>
+        </li>
+      </ul>
+    </header>
+
+    <nav class="fixed">
+      <div class="body">
+        <ul>
+          <li><a href="#home">ホーム</a></li>
+          <li><a href="#products">製品</a></li>
+          <li><a href="#returns">返品・交換</a></li>
+          <li><a href="#news">ニュース</a></li>
+          <li><a href="#contact">お問い合わせ</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main id="app"></main>
+
+    <footer>
+      <ul>
+        <li>
+          <a href="#"><h2>カテゴリ</h2></a>
+          <a href="#"><p>釣り用品</p></a>
+          <a href="#"><p>アウトドア・キャンプ</p></a>
+          <a href="#"><p>狩猟</p></a>
+          <a href="#"><p>その他の商品</p></a>
+        </li>
+        <li class="footer_item">
+          <a href="#"><h2>サービス</h2></a>
+          <a href="#"><p>お問い合わせ</p></a>
+          <a href="#"><p>返品ポリシー</p></a>
+          <a href="#"><p>配送料</p></a>
+          <a href="#"><p>利用規約</p></a>
+          <a href="#"><p>よくある質問</p></a>
+        </li>
+        <li>
+          <a href="#"><h2>私たちについて</h2></a>
+          <a href="#"><p>会社紹介</p></a>
+          <a href="#"><p>当店で購入すべき理由</p></a>
+          <a href="#"><p>お客様の評価</p></a>
+          <a href="#"><p>提携のご案内、ニュース</p></a>
+        </li>
+        <li>
+          <a href="#"><h2>連絡先</h2></a>
+          <a href="#"><p>電話番号 090-1234-5678</p></a>
+          <a href="#"><p>メール @namvufishing</p></a>
+          <a href="#"><p>東京都千代田区1-2-3 Fishing通り</p></a>
+        </li>
+      </ul>
+    </footer>
+
+    <div class="copyright"><h3>© 2025 NvFishing. 無断転載を禁じます。</h3></div>
+  `;
+}
+ async function loadProducts() {
   try {
     const res = await fetch('./data/products.json');
     const data = await res.json();
@@ -10,6 +99,12 @@ async function loadProducts() {
     console.error('error can not call json', err);
   }
 }
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadLayout();   // Gọi layout trước
+  await loadProducts(); // Sau đó mới tải dữ liệu
+});
+
 // Khởi tạo tìm kiếm sau khi products load xong
 function initSearch() {
   const searchInput = document.getElementById("searchInput");
@@ -212,7 +307,7 @@ function showDetail(id) {
       <p class="material"> <span>材質 :</span> ${p.material}  </p>
       <p class="brand"> <span>ブランド :</span> ${p.brand}  </p>
       <div class="button-group">
-       <button class="buy-btn" onclick="alert('カートに追加!')"> 🛒 カートに追加 </button>
+       <button class="buy-btn" onclick="addToCart(${p.id})"> 🛒 カートに追加 </button>
        <button class="buy-btn" onclick="window.open('${p.link}', '_blank')"> 購入ページへ </button>
       </div>
       <p class="desc"><span>説明 :</span> ${p.desc}  </p>
@@ -375,6 +470,7 @@ function router() {
   }
   else if (hash === '#contact') renderContact();
   else if (hash === '#returns') renderReturns();
+  else if(hash === '#cart') renderCart();
   else document.getElementById('app').innerHTML = '<h1>404 - ページが見つかりません</h1>';
 }
 // ----- Navigate helper -----
@@ -382,3 +478,76 @@ function navigate(hash) { location.hash = hash; }
 // ----- Start -----
 window.addEventListener('DOMContentLoaded', loadProducts);
 window.addEventListener('hashchange', router);
+// sua gio hang
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+function saveCart() {
+  localStorage.setItem('cart', JSON.stringify(cart));
+}
+function addToCart(productId) {
+  const existing = cart.find(item => item.id === productId);
+  if(existing){
+    existing.quantity += 1;
+  } else {
+    const product = products.find(p => p.id === productId);
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      img: product.img,
+      quantity: 1
+    });
+  }
+  saveCart();
+  updateCartCount();
+  // alert(`${products.find(p => p.id === productId).name} をカートに追加しました`);
+}
+function updateCartCount() {
+  const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+  document.getElementById('cartCount').textContent = `(${count} 商品)`;
+}
+updateCartCount(); // gọi sau khi loadLayout và loadProducts
+function renderCart() {
+  const app = document.getElementById('app');
+  if(cart.length === 0){
+    app.innerHTML = '<h2>カートは空です</h2><button onclick="renderHome()">ホームに戻る</button>';
+    return;
+  }
+
+  app.innerHTML = `
+    <h2>🛒 カート</h2>
+    <div class="cart-list">
+      ${cart.map(item => `
+        <div class="cart-item">
+          <img src="${item.img}" alt="${item.name}">
+          <h3>${item.name}</h3>
+          <p>価格: ${item.price.toLocaleString()} 円</p>
+          <p>数量: 
+            <button onclick="changeQuantity(${item.id}, -1)">-</button>
+            ${item.quantity}
+            <button onclick="changeQuantity(${item.id}, 1)">+</button>
+          </p>
+          <button onclick="removeFromCart(${item.id})">削除</button>
+        </div>
+      `).join('')}
+    </div>
+    <h3>合計: ${cart.reduce((sum, i) => sum + i.price*i.quantity, 0).toLocaleString()} 円</h3>
+    <button onclick="renderHome()">ホームに戻る</button>
+  `;
+}
+function changeQuantity(id, delta) {
+  const item = cart.find(i => i.id === id);
+  if(!item) return;
+  item.quantity += delta;
+  if(item.quantity <= 0) removeFromCart(id);
+  saveCart();
+  updateCartCount();
+  renderCart();
+}
+
+function removeFromCart(id){
+  cart = cart.filter(i => i.id !== id);
+  saveCart();
+  updateCartCount();
+  renderCart();
+}
