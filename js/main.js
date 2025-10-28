@@ -1,3 +1,14 @@
+let users = [];
+let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+async function loadUsers() {
+  try {
+    const res = await fetch('./data/login.json');
+    users = await res.json();
+  } catch (err) {
+    console.error('Cannot load login.json', err);
+  }
+}
 let products = [];
 async function loadLayout() {
   const root = document.getElementById('root');
@@ -35,6 +46,10 @@ async function loadLayout() {
             <div id="searchSuggestions" class="suggestions"></div>
           </div>
         </li>
+        <li id="userDiv">
+             <!-- Nút Login hoặc tên người dùng sẽ hiển thị ở đây -->
+          </li>
+
       </ul>
     </header>
 
@@ -99,25 +114,22 @@ async function loadLayout() {
     console.error('error can not call json', err);
   }
 }
-
 window.addEventListener('DOMContentLoaded', async () => {
-  await loadLayout();   // Gọi layout trước
-  await loadProducts(); // Sau đó mới tải dữ liệu
+  await loadLayout();
+  renderHeaderUser();
+  updateCartCount();
+  await loadProducts();
+  await loadUsers();
 });
-
-// Khởi tạo tìm kiếm sau khi products load xong
 function initSearch() {
   const searchInput = document.getElementById("searchInput");
   const searchSuggestions = document.getElementById("searchSuggestions");
-
-  // Khi gõ input
   searchInput.addEventListener("input", function() {
       const query = this.value.toLowerCase();
       if (!query) {
           searchSuggestions.innerHTML = "";
           return;
       }
-
       const matchedProducts = products.filter(p =>
           p.name.toLowerCase().includes(query)
       ).slice(0, 5);
@@ -134,8 +146,6 @@ function initSearch() {
           });
       });
   });
-
-  // Nhấn Enter
   searchInput.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
           const query = this.value.toLowerCase();
@@ -148,7 +158,6 @@ function initSearch() {
           }
       }
   });
-  // Click ngoài dropdown → ẩn
   document.addEventListener("click", function(e) {
       if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
           searchSuggestions.innerHTML = "";
@@ -184,7 +193,7 @@ function renderHome() {
   const slides = homeContent.querySelectorAll(".slide");
   let slideIndex = 0;
   function showSlide(index) {
-    if (!slides.length) return; // check if slides exist
+    if (!slides.length) return; 
     slides.forEach((s) => {
       s.classList.remove("active");
       const v = s.querySelector("video");
@@ -209,7 +218,7 @@ function nextSlide() {
 }
 
 showSlide(slideIndex);
-  // ----- Render sản phẩm-----
+  // ----- Render product-----
   const categories = [...new Set(products.map(p => p.category))]; // không filter
   categories.forEach(cat => {
     const catDivId = `home-${cat}`;
@@ -232,7 +241,6 @@ function renderProductsToHome(category, containerId) {
     .slice(0, 10);
 
   container.innerHTML = list.map(p => {
-    // Nếu là sản phẩm bình thường
     if(p.price){
       return `
         <div class="product-card" onclick="showDetail(${p.id})">
@@ -242,7 +250,6 @@ function renderProductsToHome(category, containerId) {
         </div>
       `;
     }
-    // Nếu là tin tức (không có price)
     else {
       return `
         <div class="product-card" onclick="navigate('#news/${p.id}')">
@@ -275,17 +282,16 @@ function renderProducts() {
       .sort((a,b) => b.id - a.id);
 
     container.innerHTML = list.map(p => `
-      <div class="product-card" onclick="showDetail(${p.id})">
-        <img src="${p.img}" alt="${p.name}">
-        <h3>${p.name}</h3>
-        <p>${p.price.toLocaleString()} 円</p>
-      </div>
-    `).join('');
+  <div class="product-card">
+    <img src="${p.img}" alt="${p.name}" onclick="showDetail(${p.id})">
+    <h3>${p.name}</h3>
+    <p>${p.price.toLocaleString()} 円</p>
+    ${renderProductAdminButtons(p)}
+  </div>
+`).join('');
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-
 // ----- show detail product -----
 function showDetail(id) {
   const app = document.getElementById('app');
@@ -318,7 +324,6 @@ function showDetail(id) {
 `;
 window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 // ----- other pages -----
 function renderReturns() {
   document.getElementById('app').innerHTML = `
@@ -362,13 +367,10 @@ function renderReturns() {
     </div>
   `;
 }
-
 function renderNews() {
   const app = document.getElementById('app');
   app.innerHTML = '';
-
   const newsItems = products.filter(p => p.category === '情報');
-
   app.insertAdjacentHTML('beforeend', `
     <section class="news-section">
       <h1>🎣 ニュース・釣りの豆知識</h1>
@@ -392,7 +394,6 @@ function renderNewsDetail(id) {
     app.innerHTML = '<h1>記事が見つかりません</h1>';
     return;
   }
-
   app.innerHTML = `
     <section class="news-detail">
       <div class="news-img-container"><img src="${n.img}" alt="${n.name}" class="news-img"></div>
@@ -409,7 +410,6 @@ function renderNewsDetail(id) {
     </section>
   `;
 }
-
 function renderContact() {
   document.getElementById('app').innerHTML = `
    <section class="contact-section">
@@ -452,22 +452,21 @@ function renderContact() {
     </section>
   `;
 }
-
 // ----- Router -----
 function router() {
   const hash = location.hash || '#home';
 
   if (hash === '#home') renderHome();
+  else if(hash === '#login') renderLogin();
+  else if(hash === '#add-product') renderAddProduct();
   else if (hash === '#products') renderProducts();
   else if (hash.startsWith('#product/')) {
     const id = hash.split('/')[1];
-    showDetail(id);
-  }
+    showDetail(id);}
   else if (hash === '#news') renderNews();
   else if (hash.startsWith('#news/')) {
     const id = Number(hash.split('/')[1]);
-    renderNewsDetail(id);
-  }
+    renderNewsDetail(id);}
   else if (hash === '#contact') renderContact();
   else if (hash === '#returns') renderReturns();
   else if(hash === '#cart') renderCart();
@@ -478,9 +477,8 @@ function navigate(hash) { location.hash = hash; }
 // ----- Start -----
 window.addEventListener('DOMContentLoaded', loadProducts);
 window.addEventListener('hashchange', router);
-// sua gio hang
+//shop-cart
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
 function saveCart() {
   localStorage.setItem('cart', JSON.stringify(cart));
 }
@@ -500,39 +498,38 @@ function addToCart(productId) {
   }
   saveCart();
   updateCartCount();
-  // alert(`${products.find(p => p.id === productId).name} をカートに追加しました`);
 }
 function updateCartCount() {
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
   document.getElementById('cartCount').textContent = `(${count} 商品)`;
 }
-updateCartCount(); // gọi sau khi loadLayout và loadProducts
+// updateCartCount(); //  loadLayout and loadProducts
 function renderCart() {
   const app = document.getElementById('app');
   if(cart.length === 0){
-    app.innerHTML = '<h2>カートは空です</h2><button onclick="renderHome()">ホームに戻る</button>';
+    app.innerHTML = '<h2 class = "cart-container ">カートは空です</h2><button onclick="renderHome()">ホームに戻る</button>';
     return;
   }
 
   app.innerHTML = `
-    <h2>🛒 カート</h2>
+    <h2  class = "cart-container">🛒 カート</h2>
     <div class="cart-list">
       ${cart.map(item => `
         <div class="cart-item">
-          <img src="${item.img}" alt="${item.name}">
-          <h3>${item.name}</h3>
+          <img class= "cart-img" src="${item.img}" alt="${item.name}">
+          <h3 class="cart-price">${item.name}</h3>
           <p>価格: ${item.price.toLocaleString()} 円</p>
-          <p>数量: 
-            <button onclick="changeQuantity(${item.id}, -1)">-</button>
+          <p>数量:
+            <button class = "cart-all"  onclick="changeQuantity(${item.id}, -1)">-</button>
             ${item.quantity}
-            <button onclick="changeQuantity(${item.id}, 1)">+</button>
+            <button class = "cart-all" onclick="changeQuantity(${item.id}, 1)">+</button>
           </p>
-          <button onclick="removeFromCart(${item.id})">削除</button>
+          <button class = "cart-delete" onclick="removeFromCart(${item.id})">削除</button>
         </div>
       `).join('')}
     </div>
-    <h3>合計: ${cart.reduce((sum, i) => sum + i.price*i.quantity, 0).toLocaleString()} 円</h3>
-    <button onclick="renderHome()">ホームに戻る</button>
+    <h3 class="cart-reduce">合計: ${cart.reduce((sum, i) => sum + i.price*i.quantity, 0).toLocaleString()} 円</h3>
+    <button class="cart-home" onclick="renderHome()">ホームに戻る</button>
   `;
 }
 function changeQuantity(id, delta) {
@@ -544,10 +541,263 @@ function changeQuantity(id, delta) {
   updateCartCount();
   renderCart();
 }
-
 function removeFromCart(id){
   cart = cart.filter(i => i.id !== id);
   saveCart();
   updateCartCount();
   renderCart();
+}
+function renderLogin() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="login-container">
+      <h2>ログイン</h2>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="ユーザー名" required>
+        <input type="password" id="password" placeholder="パスワード" required>
+        <button type="submit">ログイン</button>
+      </form>
+      <p id="loginError" style="color:red;"></p>
+    </div>
+  `;
+
+  const form = document.getElementById('loginForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    await loadUsers();  //check data from json
+    const user = users.find(u => u.username === username && u.password === password);
+    if(user){
+      currentUser = { username: user.username, role: user.role };
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      router(); // render after login
+    } else {
+      document.getElementById('loginError').textContent = "ユーザー名またはパスワードが間違っています";
+    }
+  });
+}
+function renderProductAdminButtons(product) {
+  if(currentUser && currentUser.role === 'admin'){
+    return `
+      <div class="admin-buttons">
+        <button onclick="editProduct(${product.id})">編集</button>
+        <button onclick="deleteProduct(${product.id})">削除</button>
+      </div>
+    `;
+  }
+  return '';
+}
+container.innerHTML = list.map(p => `
+  <div class="product-card" onclick="showDetail(${p.id})">
+    <img src="${p.img}" alt="${p.name}">
+    <h3>${p.name}</h3>
+    <p>${p.price.toLocaleString()} 円</p>
+    ${renderProductAdminButtons(p)}
+  </div>
+`).join('');
+function deleteProduct(id) {
+  if(!confirm("本当に削除しますか？")) return;
+  products = products.filter(p => p.id !== id);
+  saveProducts(); // data save 
+  renderProducts();
+}
+function renderAddProduct() {
+  if(!currentUser || currentUser.role !== 'admin'){
+    alert("管理者のみアクセス可能です");
+    return;
+  }
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="add-product">
+      <h2>商品を追加</h2>
+      <form id="addProductForm">
+        <input type="text" id="pName" placeholder="商品名" required>
+        <input type="number" id="pPrice" placeholder="価格" required>
+        <input type="text" id="pCategory" placeholder="カテゴリ" required>
+        <input type="text" id="pImg" placeholder="画像URL" required>
+        <textarea id="pDesc" placeholder="説明"></textarea>
+        <button type="submit">追加</button>
+      </form>
+    </div>
+  `;
+  document.getElementById('addProductForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const newProduct = {
+      id: products.length ? Math.max(...products.map(p=>p.id)) + 1 : 1,
+      name: document.getElementById('pName').value,
+      price: Number(document.getElementById('pPrice').value),
+      category: document.getElementById('pCategory').value,
+      img: document.getElementById('pImg').value,
+      desc: document.getElementById('pDesc').value
+    };
+    products.push(newProduct);
+    saveProducts();
+    renderProducts();
+  });
+};
+function saveProducts() {
+  localStorage.setItem('products', JSON.stringify(products));
+}
+async function loadProducts() {
+  const localData = localStorage.getItem('products');
+  if(localData){
+    products = JSON.parse(localData);
+    initSearch();
+    router();
+    return;
+  }
+  try {
+    const res = await fetch('./data/products.json');
+    products = await res.json();
+    initSearch();
+    router();
+  } catch(err){
+    console.error(err);
+  }
+}
+function renderHeaderUser() {
+  const userDiv = document.getElementById('userDiv');
+  if(currentUser){
+    userDiv.innerHTML = `${currentUser.username} | <a class = "login-card" href="#" onclick="logout()">ログアウト</a>`;
+  } else {
+    userDiv.innerHTML = `<a href="#login">ログイン</a>`;
+  }
+}
+function logout(){
+  currentUser = null;
+  localStorage.removeItem('currentUser');
+  renderHeaderUser();
+  navigate('#home');
+}
+function renderProductAdminButtons(product) {
+  if (currentUser && currentUser.role === 'admin') {
+    return `
+      <div class="admin-buttons">
+        <button class="admin-edit" onclick="editProduct(${product.id})">編集</button>
+        <button class="admin-delete" onclick="deleteProduct(${product.id})">削除</button>
+      </div>
+    `;
+  }
+  return '';
+}
+function deleteProduct(id) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    alert("管理者のみ削除可能です");
+    return;
+  }
+  if (!confirm("本当にこの商品を削除しますか？")) return;
+  products = products.filter(p => p.id !== id);
+  saveProducts();
+  renderProducts();
+  alert("商品を削除しました。");
+}
+function editProduct(id) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    alert("管理者のみ編集可能です");
+    return;
+  }
+  const product = products.find(p => p.id === id);
+  if (!product) {
+    alert("商品が見つかりません");
+    return;
+  }
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="edit-product">
+      <h2>商品を編集</h2>
+      <form id="editProductForm">
+        <label>商品名:</label>
+        <input type="text" id="editName" value="${product.name}" required>
+
+        <label>価格:</label>
+        <input type="number" id="editPrice" value="${product.price}" required>
+
+        <label>カテゴリ:</label>
+        <input type="text" id="editCategory" value="${product.category}" required>
+
+        <label>画像URL:</label>
+        <input type="text" id="editImg" value="${product.img}" required>
+
+        <label>説明:</label>
+        <textarea id="editDesc">${product.desc || ''}</textarea>
+
+        <div class="form-buttons">
+          <button type="submit">更新</button>
+          <button type="button" onclick="renderProducts()">キャンセル</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.getElementById('editProductForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    // get data from form
+    product.name = document.getElementById('editName').value;
+    product.price = Number(document.getElementById('editPrice').value);
+    product.category = document.getElementById('editCategory').value;
+    product.img = document.getElementById('editImg').value;
+    product.desc = document.getElementById('editDesc').value;
+    // save
+    saveProducts();
+    alert("商品情報を更新しました！");
+    renderProducts();
+  });
+}
+function renderAdminPage() {
+  if (!currentUser || currentUser.role !== 'admin') {
+    alert("管理者のみアクセス可能です");
+    return;
+  }
+  const app = document.getElementById('app');
+  // total 
+  const totalProducts = products.length;
+  const totalRevenue = products.reduce((sum, p) => sum + (p.sold || 0) * p.price, 0);
+  const totalCost = products.reduce((sum, p) => sum + (p.cost || 0) * (p.sold || 0), 0);
+  const totalProfit = totalRevenue - totalCost;
+  const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+  app.innerHTML = `
+    <div class="admin-dashboard">
+      <h2>📊 管理者ページ（商品・売上・在庫）</h2>
+
+      <section class="summary">
+        <div class="card">商品数: <b>${totalProducts}</b></div>
+        <div class="card">売上: <b>${totalRevenue.toLocaleString()} 円</b></div>
+        <div class="card">利益: <b>${totalProfit.toLocaleString()} 円</b></div>
+        <div class="card">在庫数: <b>${totalStock}</b></div>
+      </section>
+
+      <section class="product-table">
+        <h3>商品一覧</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>商品名</th>
+              <th>価格</th>
+              <th>売数</th>
+              <th>在庫</th>
+              <th>利益</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products.map(p => `
+              <tr>
+                <td>${p.id}</td>
+                <td>${p.name}</td>
+                <td>${p.price.toLocaleString()}</td>
+                <td>${p.sold || 0}</td>
+                <td>${p.stock || 0}</td>
+                <td>${((p.price - (p.cost || 0)) * (p.sold || 0)).toLocaleString()}</td>
+                <td>
+                  <button onclick="editProduct(${p.id})">編集</button>
+                  <button onclick="deleteProduct(${p.id})">削除</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  `;
 }
