@@ -47,7 +47,6 @@ async function loadLayout() {
           </div>
         </li>
         <li id="userDiv">
-             <!-- Nút Login hoặc tên người dùng sẽ hiển thị ở đây -->
           </li>
 
       </ul>

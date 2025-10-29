@@ -131,6 +131,9 @@ footer ul li p{
     justify-content: center;
     align-items: center;
 }
+#cartCount{
+  color: rgb(251, 0, 0);
+}
 /*  get page by home id */
 #home-content {
   display: flex;
