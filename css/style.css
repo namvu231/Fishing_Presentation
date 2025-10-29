@@ -629,12 +629,12 @@ footer ul li p{
   cursor: pointer;
   font-size: 12px;
 }
-.admin-edit {
+.admin-edit ,.button-edit {
   background-color: #4CAF50;
   color: white;
 }
 
-.admin-delete {
+.admin-delete,.button-delete {
   background-color: #e74c3c;
   color: white;
 }
@@ -828,13 +828,13 @@ footer ul li p{
 }
 
 .cart-all {
-  background-color: #007bff;
+  background-color:var(--color-primary);
   color: #fff;
   margin: 0 5px;
 }
 
 .cart-all:hover {
-  background-color: #0056b3;
+  background-color:var(--color-primary);
 }
 
 .cart-delete {
@@ -872,4 +872,8 @@ footer ul li p{
 .cart-container h2.cart-empty {
   text-align: center;
   color: #777;
+}
+#userDiv a{
+  color: #000;
+  padding-right: 30px;
 }

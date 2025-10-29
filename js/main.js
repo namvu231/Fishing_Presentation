@@ -240,25 +240,29 @@ function renderProductsToHome(category, containerId) {
     .slice(0, 10);
 
   container.innerHTML = list.map(p => {
+    // Nút admin chỉ hiển thị khi currentUser là admin
+    const adminButtons = ''; // Home không hiển thị nút admin
     if(p.price){
       return `
         <div class="product-card" onclick="showDetail(${p.id})">
           <img src="${p.img}" alt="${p.name}">
           <h3>${p.name}</h3>
           <p>${p.price.toLocaleString()} 円</p>
+          ${adminButtons}
         </div>
       `;
-    }
-    else {
+    } else {
       return `
         <div class="product-card" onclick="navigate('#news/${p.id}')">
           <img src="${p.img}" alt="${p.name}">
           <h3>${p.name}</h3>
+          ${adminButtons}
         </div>
       `;
     }
   }).join('');
 }
+
 // ----- Render products list -----
 function renderProducts() {
   const app = document.getElementById('app');
@@ -669,17 +673,7 @@ function logout(){
   renderHeaderUser();
   navigate('#home');
 }
-function renderProductAdminButtons(product) {
-  if (currentUser && currentUser.role === 'admin') {
-    return `
-      <div class="admin-buttons">
-        <button class="admin-edit" onclick="editProduct(${product.id})">編集</button>
-        <button class="admin-delete" onclick="deleteProduct(${product.id})">削除</button>
-      </div>
-    `;
-  }
-  return '';
-}
+
 function deleteProduct(id) {
   if (!currentUser || currentUser.role !== 'admin') {
     alert("管理者のみ削除可能です");
@@ -742,6 +736,17 @@ function editProduct(id) {
     renderProducts();
   });
 }
+function renderProductAdminButtons(product) {
+  if (currentUser && currentUser.role === 'admin') {
+    return `
+      <div class="admin-buttons">
+        <button class="admin-edit" onclick="editProduct(${product.id})">編集</button>
+        <button class="admin-delete" onclick="deleteProduct(${product.id})">削除</button>
+      </div>
+    `;
+  }
+  return '';
+}
 function renderAdminPage() {
   if (!currentUser || currentUser.role !== 'admin') {
     alert("管理者のみアクセス可能です");
@@ -789,8 +794,8 @@ function renderAdminPage() {
                 <td>${p.stock || 0}</td>
                 <td>${((p.price - (p.cost || 0)) * (p.sold || 0)).toLocaleString()}</td>
                 <td>
-                  <button onclick="editProduct(${p.id})">編集</button>
-                  <button onclick="deleteProduct(${p.id})">削除</button>
+                  <button class="button-edit" onclick="editProduct(${product.id})">編集</button>
+        vv        <button class="button-delete" onclick="deleteProduct(${product.id})">削除</button>
                 </td>
               </tr>
             `).join('')}
