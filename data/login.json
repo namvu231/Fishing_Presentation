@@ -1,4 +1,11 @@
 [
   { "username": "admin", "password": "admin123", "role": "admin" },
-  { "username": "user1", "password": "user123", "role": "user" }
+  { "username": "user1", "password": "user123", "role": "user" },
+  { "username": "user2", "password": "user456", "role": "user" },
+  { "username": "user3", "password": "user789", "role": "user" },
+  { "username": "user4", "password": "user123", "role": "user" },
+  { "username": "user5", "password": "user456", "role": "user" },
+  { "username": "user6", "password": "user789", "role": "user" },
+  { "username": "user7", "password": "user123", "role": "user" },
+  { "username": "user8", "password": "user456", "role": "user" }
 ]

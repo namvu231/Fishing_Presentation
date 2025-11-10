@@ -29,7 +29,7 @@ async function loadLayout() {
           <a href="tel:0123456789" class="call-btn"><img id="callBtn" src="./img/icon/call.png" alt="迅速な注文"></a>
           <div>
             <h2>迅速な注文</h2>
-            <p>今すぐお電話ください 0934.687.369</p>
+            <p>今すぐお電話ください</p>
           </div>
         </li>
         <li>
@@ -134,10 +134,10 @@ function initSearch() {
       ).slice(0, 5);
 
       searchSuggestions.innerHTML = matchedProducts.map(p => `
-          <div data-id="${p.id}">${p.name}</div>
+          <div class="item-search" data-id="${p.id}">${p.name}</div>
       `).join('');
 
-      searchSuggestions.querySelectorAll("div").forEach(item => {
+      searchSuggestions.querySelectorAll(".item-search").forEach(item => {
           item.addEventListener("click", () => {
               navigate(`#product/${item.dataset.id}`);
               searchSuggestions.innerHTML = "";
@@ -160,6 +160,8 @@ function initSearch() {
   document.addEventListener("click", function(e) {
       if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
           searchSuggestions.innerHTML = "";
+          searchInput.value = "";
+
       }
   });
 }
@@ -192,7 +194,7 @@ function renderHome() {
   const slides = homeContent.querySelectorAll(".slide");
   let slideIndex = 0;
   function showSlide(index) {
-    if (!slides.length) return; 
+    if (!slides.length) return;
     slides.forEach((s) => {
       s.classList.remove("active");
       const v = s.querySelector("video");
@@ -602,7 +604,7 @@ container.innerHTML = list.map(p => `
 function deleteProduct(id) {
   if(!confirm("本当に削除しますか？")) return;
   products = products.filter(p => p.id !== id);
-  saveProducts(); // data save 
+  saveProducts(); // data save
   renderProducts();
 }
 function renderAddProduct() {
